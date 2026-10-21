@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Akıllı Parola Analiz ve Üretim Asistanı</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome İkonları -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans antialiased flex flex-col justify-between">
+
+    <!-- Header -->
+    <header class="bg-slate-800 border-b border-slate-700 py-4 shadow-md">
+        <div class="max-w-4xl mx-auto px-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold flex items-center gap-2 text-indigo-400">
+                <i class="fa-solid fa-shield-halved"></i> Parola Analiz ve Üretim Asistanı
+            </h1>
+            <span class="text-xs bg-indigo-900 text-indigo-300 px-3 py-1 rounded-full font-medium">Bilgisayar Müh. Tasarımı</span>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-4xl mx-auto px-4 py-8 w-full grid gap-8 md:grid-cols-2">
+        
+        <!-- SOL PANEL: Parola Analiz Kartı -->
+        <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-300">
+                    <i class="fa-solid fa-magnifying-glass-chart"></i> Parola Güvenlik Analizi
+                </h2>
+                <div class="relative mb-4">
+                    <input type="password" id="passwordInput" placeholder="Analiz edilecek parolayı girin..." 
+                        class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-indigo-500 pr-12 transition">
+                    <button id="togglePasswordBtn" class="absolute right-3 top-3.5 text-slate-400 hover:text-slate-200">
+                        <i class="fa-solid fa-eye" id="eyeIcon"></i>
+                    </button>
+                </div>
+
+                <!-- Sonuç Alanı (Başlangıçta gizli) -->
+                <div id="analysisResult" class="hidden space-y-4">
+                    <div class="flex items-center justify-between bg-slate-900 p-3 rounded-xl border border-slate-700">
+                        <div>
+                            <span class="text-xs text-slate-400 block">Güvenlik Skoru</span>
+                            <span id="scoreText" class="text-2xl font-bold">0 / 10</span>
+                        </div>
+                        <div id="levelBadge" class="px-3 py-1 rounded-lg text-sm font-semibold">--</div>
+                    </div>
+
+                    <!-- Zayıf Yönler -->
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-rose-400 mb-2"><i class="fa-solid fa-triangle-exclamation"></i> Zayıf Yönler / Riskler</h3>
+                        <ul id="weaknessesList" class="text-sm space-y-1 text-slate-300 list-disc list-inside bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                            <!-- Dinamik doldurulacak -->
+                        </ul>
+                    </div>
+
+                    <!-- Öneriler -->
+                    <div>
+                        <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-400 mb-2"><i class="fa-solid fa-lightbulb"></i> İyileştirme Önerileri</h3>
+                        <ul id="suggestionsList" class="text-sm space-y-1 text-slate-300 list-disc list-inside bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                            <!-- Dinamik doldurulacak -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <button id="analyzeBtn" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-indigo-600/20">
+                Parolayı Analiz Et
+            </button>
+        </section>
+
+        <!-- SAĞ PANEL: Parola Üretme Kartı -->
+        <section class="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-xl flex flex-col justify-between">
+            <div>
+                <h2 class="text-lg font-semibold mb-4 flex items-center gap-2 text-indigo-300">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Güvenli Parola Üretici
+                </h2>
+
+                <!-- Mod Seçimi -->
+                <div class="grid grid-cols-2 gap-2 mb-4 bg-slate-900 p-1.5 rounded-xl border border-slate-700">
+                    <button type="button" id="modeRandom" class="py-2 text-sm font-medium rounded-lg bg-indigo-600 text-white transition">Tam Rastgele</button>
+                    <button type="button" id="modeMemorable" class="py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-slate-200 transition">Akılda Kalıcı</button>
+                </div>
+
+                <!-- Uzunluk Slider -->
+                <div class="mb-4">
+                    <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-400">Uzunluk:</span>
+                        <span id="lengthVal" class="font-bold text-indigo-400">16</span>
+                    </div>
+                    <input type="range" id="lengthRange" min="6" max="64" value="16" class="w-full accent-indigo-500 bg-slate-700 rounded-lg h-2 cursor-pointer">
+                </div>
+
+                <!-- Karakter Seçenekleri (Rastgele mod için) -->
+                <div id="randomOptions" class="grid grid-cols-2 gap-3 mb-4 text-sm">
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="chkLower" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0"> Küçük Harf (a-z)
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="chkUpper" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0"> Büyük Harf (A-Z)
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="chkDigit" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0"> Rakam (0-9)
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="chkSpecial" checked class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0"> Özel Karakter (!@#)
+                    </label>
+                    <label class="col-span-2 flex items-center gap-2 cursor-pointer text-slate-300">
+                        <input type="checkbox" id="chkExcludeSimilar" class="rounded bg-slate-900 border-slate-700 text-indigo-600 focus:ring-0"> Benzer Karakterleri Hariç Tut (O/0, l/1)
+                    </label>
+                </div>
+
+                <!-- Kelime Sayısı Seçeneği (Akılda kalıcı mod için - Başlangıçta gizli) -->
+                <div id="memorableOptions" class="hidden mb-4 text-sm">
+                    <label class="block text-slate-400 mb-1">Kelime Sayısı:</label>
+                    <select id="wordCountSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-indigo-500">
+                        <option value="3">3 Kelime</option>
+                        <option value="4" selected>4 Kelime</option>
+                    </select>
+                </div>
+
+                <!-- Üretilen Parola Görüntüleme -->
+                <div class="bg-slate-900 p-3 rounded-xl border border-slate-700 flex items-center justify-between mb-4">
+                    <span id="generatedPasswordOutput" class="font-mono text-indigo-300 text-sm tracking-wider truncate mr-2">Parola bekleniyor...</span>
+                    <button id="copyBtn" class="text-slate-400 hover:text-indigo-400 transition px-2 py-1" title="Kopyala">
+                        <i class="fa-solid fa-copy text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <button id="generateBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-xl transition shadow-lg shadow-emerald-600/20">
+                Güvenli Parola Üret
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="text-center py-4 text-xs text-slate-500 border-t border-slate-800">
+        Fırat Üniversitesi - Bilgisayar Mühendisliği Tasarımı Projesi
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
