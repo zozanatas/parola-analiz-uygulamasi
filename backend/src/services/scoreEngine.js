@@ -60,6 +60,9 @@ export function analyzePassword(password) {
   if (pf.words.length === 1) weaknesses.push(`Sözlük kelimesi/isim içeriyor: ${pf.words[0]}`);
   for (const e of pf.embedded) weaknesses.push(`Gömülü sözlük kelimesi olabilir: ${e}`);
   for (const p of pf.personal) weaknesses.push(`Kişisel veri şablonu (${p.type}): ${p.text}`);
+  if (pf.embedded.length) {
+    suggestions.push('Parolanın içindeki tahmin edilebilir kelimeyi değiştirin veya rastgele bir parola üretin.');
+  }
   if (pf.words.length === 1 || pf.common || pf.personal.length) {
     suggestions.push('Tek bir kelime/isim ya da yıl yerine, birbiriyle alakasız 3-4 kelimeyi sembol ve rakamlarla birleştirin.');
   }

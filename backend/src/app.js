@@ -1,6 +1,10 @@
 import express from 'express';
 import cors from 'cors';
+import { fileURLToPath } from 'node:url';
 import apiRouter from './routes/api.js';
+
+// Frontend (index.html, app.js, style.css) aynı sunucudan servis edilir
+const FRONTEND_DIR = fileURLToPath(new URL('../../frontend', import.meta.url));
 
 export function createApp() {
   const app = express();
@@ -19,6 +23,7 @@ export function createApp() {
   app.use(express.json({ limit: '4kb' }));
 
   app.use('/api', apiRouter);
+  app.use(express.static(FRONTEND_DIR));
 
   app.use((_req, res) => res.status(404).json({ error: 'Bulunamadı.' }));
 

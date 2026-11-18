@@ -76,9 +76,11 @@ function leetWords(password, alreadyFound) {
 /** Yıl ve tarih gibi kişisel veri şablonları. [{type, text}] */
 export function detectPersonalData(password) {
   const out = [];
+  const thisYear = new Date().getFullYear();
   for (const run of password.match(/\d+/g) || []) {
-    const year = run.match(/(?:19|20)\d{2}/);
-    if (year) out.push({ type: 'yıl', text: year[0] });
+    // 1900..bu yıl arası yıl sayılır; gelecek yıllar (2087 vb.) sayılmaz
+    const year = (run.match(/(?:19|20)\d{2}/g) || []).find((y) => Number(y) <= thisYear);
+    if (year) out.push({ type: 'yıl', text: year });
     if (run.length >= 6) {
       const date = run.match(/(?:0[1-9]|[12]\d|3[01])(?:0[1-9]|1[0-2])(?:\d{4}|\d{2})/);
       if (date) out.push({ type: 'tarih', text: date[0] });

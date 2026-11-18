@@ -47,15 +47,15 @@ function keyboardMatches(p) {
 function runMatches(p) {
   // 123, 987, abc, cba
   const matches = [];
-  const isDigit = (c) => c >= '0' && c <= '9';
-  const isLetter = (c) => c >= 'a' && c <= 'z';
+  // sadece rakam->rakam veya harf->harf ilerler (xyz{| gibi sembole taşma sayılmaz)
+  const kind = (c) => (c >= '0' && c <= '9' ? 'digit' : c >= 'a' && c <= 'z' ? 'letter' : null);
   let i = 0;
   while (i < p.length - 1) {
     const d = p.charCodeAt(i + 1) - p.charCodeAt(i);
-    const sameKind = (isDigit(p[i]) && isDigit(p[i + 1])) || (isLetter(p[i]) && isLetter(p[i + 1]));
-    if ((d === 1 || d === -1) && sameKind) {
+    const k = kind(p[i]);
+    if ((d === 1 || d === -1) && k && kind(p[i + 1]) === k) {
       let j = i + 1;
-      while (j + 1 < p.length && p.charCodeAt(j + 1) - p.charCodeAt(j) === d && (isDigit(p[j + 1]) === isDigit(p[i]))) j++;
+      while (j + 1 < p.length && p.charCodeAt(j + 1) - p.charCodeAt(j) === d && kind(p[j + 1]) === k) j++;
       const len = j - i + 1;
       if (len >= RUN_MIN) {
         matches.push({ type: 'run', start: i, length: len });

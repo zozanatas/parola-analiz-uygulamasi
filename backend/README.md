@@ -7,7 +7,7 @@ Node.js + Express API. Parola gücünü 3 analizle 0-10 arası puanlar ve iki mo
 ```bash
 npm install
 cp .env.example .env   # opsiyonel (PORT, CORS_ORIGIN)
-npm start              # http://localhost:3001   (geliştirme: npm run dev)
+npm start              # http://localhost:3001  (frontend + API aynı adreste; geliştirme: npm run dev)
 npm test
 ```
 
@@ -44,6 +44,11 @@ Tüm alanlar opsiyoneldir:
   "wordCount": 3             // sadece memorable, 3 veya 4 (boşsa uzunluğa göre otomatik)
 }
 ```
+Kurallar (aksi halde `400`):
+- Akılda kalıcı: `wordCount: 4` için `length` en az 22 (3 kelime için 16); rakam veya özel karakterden en az biri açık olmalı.
+- Tam rastgele: sadece rakam seçiliyse `length` en fazla 32.
+- Analizde emoji içeren parola reddedilir.
+
 Cevap:
 ```json
 { "mode": "memorable", "length": 18, "password": "Saat*Terzi:Inek36.", "entropyBits": 44,
