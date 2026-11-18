@@ -3,6 +3,8 @@ import { analyzePassword } from '../services/scoreEngine.js';
 import { generatePassword, ValidationError } from '../services/generateService.js';
 
 export const MAX_PASSWORD_LENGTH = 128;
+// Emoji ve emoji birleştiricileri (ZWJ, varyasyon seçicisi, ten rengi, bayrak harfleri)
+const EMOJI = /[\p{Extended_Pictographic}\p{Emoji_Modifier}\p{Regional_Indicator}‍️]/u;
 
 const router = Router();
 
@@ -16,6 +18,9 @@ router.post('/analyze', (req, res) => {
   }
   if (password.length > MAX_PASSWORD_LENGTH) {
     return res.status(400).json({ error: `Parola en fazla ${MAX_PASSWORD_LENGTH} karakter olabilir.` });
+  }
+  if (EMOJI.test(password)) {
+    return res.status(400).json({ error: 'Parola emoji içeremez.' });
   }
   res.json(analyzePassword(password));
 });

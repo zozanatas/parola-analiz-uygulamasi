@@ -7,6 +7,12 @@ export class ValidationError extends Error {}
 
 const bool = (v, def) => (v === undefined || v === null ? def : v);
 
+// Üretim kuralları (filtreler bu sınırların dışında uygun aday bulamıyor):
+//  - Akılda kalıcı modda kelime sayısına göre en kısa uzunluk (en kısa kelime 4 harf + ayraçlar)
+//  - Sadece rakamdan oluşan parola en fazla 32 karakter (uzun rakam dizilerinde yıl/tarih/ardışıklık kaçınılmaz)
+export const MEMORABLE_MIN_LENGTH = { 3: 16, 4: 22 };
+export const DIGIT_ONLY_MAX_LENGTH = 32;
+
 export function generatePassword(body = {}) {
   const mode = body.mode ?? 'random';
   if (mode !== 'random' && mode !== 'memorable') {
@@ -32,18 +38,33 @@ export function generatePassword(body = {}) {
     const selected = ['lowercase', 'uppercase', 'digit', 'special'].filter((k) => flags[k]).length;
     if (selected === 0) throw new ValidationError('En az bir karakter türü seçilmelidir.');
     if (length < selected) throw new ValidationError('length seçilen karakter türü sayısından küçük olamaz.');
+    const digitOnly = flags.digit && !flags.lowercase && !flags.uppercase && !flags.special;
+    if (digitOnly && length > DIGIT_ONLY_MAX_LENGTH) {
+      throw new ValidationError(`Sadece rakamdan oluşan parola en fazla ${DIGIT_ONLY_MAX_LENGTH} karakter olabilir.`);
+    }
   } else {
     if (!flags.lowercase && !flags.uppercase) {
       throw new ValidationError('Akılda kalıcı modda küçük veya büyük harften en az biri seçilmelidir.');
     }
-    if (body.wordCount !== undefined && (![3, 4].includes(body.wordCount))) {
-      throw new ValidationError('wordCount 3 veya 4 olmalıdır.');
+    if (!flags.digit && !flags.special) {
+      throw new ValidationError('Akılda kalıcı modda rakam veya özel karakterden en az biri seçilmelidir.');
+    }
+    if (body.wordCount !== undefined) {
+      if (![3, 4].includes(body.wordCount)) throw new ValidationError('wordCount 3 veya 4 olmalıdır.');
+      const min = MEMORABLE_MIN_LENGTH[body.wordCount];
+      if (length < min) throw new ValidationError(`${body.wordCount} kelime için uzunluk en az ${min} olmalıdır.`);
     }
   }
 
-  const gen = mode === 'random'
-    ? generateRandom({ length, ...flags })
-    : generateMemorable({ length, wordCount: body.wordCount, ...flags });
+  let gen;
+  try {
+    gen = mode === 'random'
+      ? generateRandom({ length, ...flags })
+      : generateMemorable({ length, wordCount: body.wordCount, ...flags });
+  } catch {
+    // Kurallar bunu engellemeli; yine de olursa 500 yerine anlaşılır bir mesaj dön
+    throw new ValidationError('Bu ayarlarla uygun parola üretilemedi. Uzunluğu veya seçenekleri değiştirip tekrar deneyin.');
+  }
   const analysis = analyzePassword(gen.password);
 
   return {

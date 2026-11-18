@@ -149,3 +149,46 @@ test('stateless: parola loglara düşmez, hata cevabında gövde sızmaz', async
   }
   assert.ok(!logged.some((l) => l.includes(secret)));
 });
+
+// ---------- Üretim kuralları ve düzeltmeler ----------
+test('akılda kalıcı: kelime sayısına göre en kısa uzunluk kuralı', () => {
+  assert.throws(() => generatePassword({ mode: 'memorable', length: 16, wordCount: 4 }), /en az 22/);
+  for (let i = 0; i < 30; i++) {
+    assert.equal(generatePassword({ mode: 'memorable', length: 22, wordCount: 4 }).password.length, 22);
+    assert.equal(generatePassword({ mode: 'memorable', length: 16, wordCount: 3 }).password.length, 16);
+  }
+  assert.throws(() => generatePassword({ mode: 'memorable', length: 30, digit: false, special: false }), /rakam veya özel/);
+});
+
+test('tam rastgele: sadece rakam en fazla 32 karakter', () => {
+  const digits = { mode: 'random', lowercase: false, uppercase: false, special: false };
+  assert.throws(() => generatePassword({ ...digits, length: 33 }), /en fazla 32/);
+  for (let i = 0; i < 20; i++) assert.match(generatePassword({ ...digits, length: 32 }).password, /^\d{32}$/);
+});
+
+test('üretim hatası 500 değil 400 döner', async () => {
+  const res = await post('/api/generate', { mode: 'memorable', length: 16, wordCount: 4 });
+  assert.equal(res.status, 400);
+  assert.match((await res.json()).error, /en az 22/);
+});
+
+test('emoji içeren parola reddedilir', async () => {
+  for (const p of ['😀😀😀😀😀😀', 'Parola123!🔥', 'abc👍🏽def', 'x❤️y']) {
+    assert.equal((await post('/api/analyze', { password: p })).status, 400, p);
+  }
+  assert.equal((await post('/api/analyze', { password: 'Şifre-Ğüçlü_2x!' })).status, 200);
+});
+
+test('ardışıklık sembole taşmaz, gelecek yıl yıl sayılmaz', () => {
+  assert.deepEqual(findSequences('xyz{|}').map((m) => m.text), ['xyz']);
+  const personal = (p) => analyzePassword(p).analyses.pattern.findings.personal.map((x) => x.text);
+  assert.deepEqual(personal('Kitap*Masa_2087'), []);
+  assert.deepEqual(personal('Kitap*Masa_1998'), ['1998']);
+  assert.deepEqual(personal('Kitap*Masa_20871998'), ['1998']);
+});
+
+test('frontend aynı sunucudan servis edilir', async () => {
+  const res = await fetch(base + '/');
+  assert.equal(res.status, 200);
+  assert.match(await res.text(), /Parola Analiz/);
+});
